@@ -40,9 +40,9 @@ if (Config.WORKTYPE == 'public') {
         }); 
     
 	    memeMaker({
-            image: location,         
+            image: preview,         
             outfile: 'asena-meme.png',
-            topText: topText,
+            topText: title,
             bottomText: bottomText,
         }, async function(err) {
             if(err) throw new Error(err)
