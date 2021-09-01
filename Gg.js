@@ -1,7 +1,53 @@
+const Asena = require('../events');
+const {MessageType, Mimetype} = require('@adiwajshing/baileys');
+const fs = require('fs')
+const Config = require('../config');
+const Language = require('../language');
+const Lang = Language.getString('memes');
 import { WAConnection, ProxyAgent } from '@adiwajshing/baileys'
 
 const conn = new WAConnecion ()
-conn.connectOptions.agent = ProxyAgent ('http://some-host:1234')
+conn.connectOptions.agent = ProxyAgent ('https://meme-api.herokuapp.com/gimme')
 
 await conn.connect ()
-console.log ("oh hello " + conn.user.name + "! You connected via a proxy")
+
+
+
+if (Config.WORKTYPE == 'public') {
+
+    Asena.addCommand({pattern: 'memee ?(.*)', fromMe: false, desc: Lang.MEMES_DESC}, (async (message, match) => {    
+
+        if (message.reply_message === false) return await message.client.sendMessage(message.jid,Lang.NEED_REPLY, MessageType.text);
+        var topText, bottomText;
+        if (match[1].includes(';')) {
+            var split = match[1].split(';');
+            topText = split[1];
+            bottomText = split[0];
+        }
+	    else {
+            topText = match[1];
+            bottomText = '';
+        }
+    
+	    var info = await message.reply(Lang.DOWNLOADING);
+	
+        var location = await message.client.downloadAndSaveMediaMessage({
+            key: {
+                remoteJid: message.reply_message.jid,
+                id: message.reply_message.id
+            },
+            message: message.reply_message.data.quotedMessage
+        }); 
+    
+	    memeMaker({
+            image: location,         
+            outfile: 'asena-meme.png',
+            topText: topText,
+            bottomText: bottomText,
+        }, async function(err) {
+            if(err) throw new Error(err)
+            await message.client.sendMessage(message.jid, fs.readFileSync('asena-meme.png'), MessageType.image, {filename: 'asena-meme.png', mimetype: Mimetype.png, caption: 'Made by WhatsAsena'});
+            await info.delete();    
+        });
+    }));
+}
